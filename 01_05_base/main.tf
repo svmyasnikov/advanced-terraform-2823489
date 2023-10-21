@@ -36,16 +36,16 @@ provider "aws" {
 
 # VPC
 resource "aws_vpc" "vpc1" {
-  cidr_block = var.vpc_cidr
+  cidr_block           = var.vpc_cidr
   enable_dns_hostnames = "true"
 }
 
 # SUBNET
 resource "aws_subnet" "subnet1" {
-  cidr_block = var.subnet1_cidr
-  vpc_id = aws_vpc.vpc1.id
+  cidr_block              = var.subnet1_cidr
+  vpc_id                  = aws_vpc.vpc1.id
   map_public_ip_on_launch = "true"
-  availability_zone = data.aws_availability_zones.available.names[1]
+  availability_zone       = data.aws_availability_zones.available.names[1]
 }
 
 # INTERNET_GATEWAY
@@ -64,49 +64,49 @@ resource "aws_route_table" "route_table1" {
 }
 
 resource "aws_route_table_association" "route-subnet1" {
-  subnet_id = aws_subnet.subnet1.id
+  subnet_id      = aws_subnet.subnet1.id
   route_table_id = aws_route_table.route_table1.id
 }
 
 # SECURITY_GROUP
 resource "aws_security_group" "sg-nodejs-instance" {
-  name = "nodejs_sg"
+  name   = "nodejs_sg"
   vpc_id = aws_vpc.vpc1.id
 
   ingress {
-    from_port = 80
-    to_port = 80
-    protocol = "tcp"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
-    from_port = 443
-    to_port = 443
-    protocol = "tcp"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
-    from_port = 22
-    to_port = 22
-    protocol = "tcp"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  
+
   egress {
-    from_port = 0
-    to_port = 0
-    protocol = "-1"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
 
 # INSTANCE
 resource "aws_instance" "nodejs1" {
-  ami = data.aws_ami.aws-linux.id
-  instance_type = "t2.micro"
-  subnet_id = aws_subnet.subnet1.id
+  ami                    = data.aws_ami.ubuntu22.id
+  instance_type          = "t2.micro"
+  subnet_id              = aws_subnet.subnet1.id
   vpc_security_group_ids = [aws_security_group.sg-nodejs-instance.id]
   key_name               = var.ssh_key_name
 
@@ -126,25 +126,52 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
-data "aws_ami" "aws-linux" {
+data "aws_ami" "ubuntu22" {
   most_recent = true
   owners      = ["amazon"]
-
   filter {
     name   = "name"
-    values = ["amzn-ami-hvm*"]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
   }
-
-  filter {
-    name   = "root-device-type"
-    values = ["ebs"]
-  }
-
   filter {
     name   = "virtualization-type"
     values = ["hvm"]
   }
 }
+
+# data "aws_ami" "aws-linux" {
+#   most_recent = true
+#   owners      = ["amazon"]
+#   filter {
+#     name   = "name"
+#     values = ["amzn2-ami-hvm-2.*"]
+#   }
+#   filter {
+#     name   = "root-device-type"
+#     values = ["ebs"]
+#   }
+#   filter {
+#     name   = "virtualization-type"
+#     values = ["hvm"]
+#   }
+#   filter {
+#     name   = "architecture"
+#     values = ["x86_64"]
+#   }
+# }
+
+# data "aws_ami" "ubuntu20" {
+#   most_recent = true
+#   owners      = ["amazon"]
+#   filter {
+#     name   = "name"
+#     values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
+#   }
+#   filter {
+#     name   = "virtualization-type"
+#     values = ["hvm"]
+#   }
+# }
 
 # //////////////////////////////
 # OUTPUT
@@ -152,3 +179,27 @@ data "aws_ami" "aws-linux" {
 output "instance-dns" {
   value = aws_instance.nodejs1.public_dns
 }
+
+output "ami_id_ubuntu22" {
+  value = data.aws_ami.ubuntu22.id
+}
+
+output "ami_name_ubuntu22" {
+  value = data.aws_ami.ubuntu22.name
+}
+
+# output "ami_id" {
+#   value = data.aws_ami.aws-linux.id
+# }
+
+# output "ami_name" {
+#   value = data.aws_ami.aws-linux.name
+# }
+
+# output "ami_id_ubuntu20" {
+#   value = data.aws_ami.ubuntu20.id
+# }
+
+# output "ami_name_ubuntu20" {
+#   value = data.aws_ami.ubuntu20.name
+# }
